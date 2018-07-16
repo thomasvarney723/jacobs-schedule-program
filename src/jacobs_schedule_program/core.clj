@@ -46,7 +46,7 @@
   (let [in (read-line)]
     (case in
       "1" (do (print (str "\n\t\t" "You chose to generate the roster of team members and their schedules."
-                          "\n\n\t\t" \tab "What file should we import team member data from? : "))
+                          "\n\n\t\t\t" "What file should we import team member data from? : "))
               (flush)
               (let [in (read-line)]
                 (def data (structure-data (slurp in)))
@@ -54,7 +54,7 @@
                 (recur)))
       "2" (do (run! print (concat "\n\t\t" "You chose to print the roster of team members."
                                   "\n\t\t" "There are currently " [(count data)] " team member(s) on the roster."
-                                  (mapv #(str "\n\t\t" \tab "The name of team member " %1 " is " (:name %2) "." "\n")
+                                  (mapv #(str "\n\t\t\t" "The name of team member " %1 " is " (:name %2) "." "\n")
                                         (range 1 (inc (count data)))
                                         data)
                                   "\n\t\t" "The roster of team members can be seen above." "\n\n"))
