@@ -1,0 +1,93 @@
+(ns jacobs-schedule-program.core
+  (:gen-class))
+
+(def tabs "\t\t")
+(def nl \newline)
+
+(defn table! [seq-strs]
+  (let [horiz-line "-----------------"
+        columns    "|I|U|M|T|W|R|F|S|"
+        single-table (fn [xo-str]
+                       (->> (map (partial apply str)
+                                 (map (comp #(str "|" % "|") char) (range 65 81)) ;;|A|-|P|
+                                 (map #(apply str (interleave % (repeat "|"))) xo-str))
+                            (concat [horiz-line columns horiz-line])
+                            (map #(str tabs %))
+                            (mapv println)))]
+    (str (single-table (take 16 seq-strs))    ;; first week
+         (single-table (drop 16 seq-strs))))) ;; second week
+
+(defn table [seq-strs]
+  (let [horiz-line "-----------------"
+        columns    "|I|U|M|T|W|R|F|S|"
+        single-table (fn [xo-str]
+                       (->> (map (partial apply str)
+                                 (map (comp #(str "|" % "|") char) (range 65 81)) ;;|A|-|P|
+                                 (map #(apply str (interleave % (repeat "|"))) xo-str))
+                            (concat [horiz-line nl columns nl horiz-line nl])
+                            (map #(str tabs % nl))))]
+    (->> seq-strs (split-at 16) (map single-table) str)))
+
+(defn weeks-selector [team-member-maps]
+  (->> team-member-maps
+       (map (partial apply str))
+       (apply (partial map vector))
+       (map (partial filter #(= % \X)))
+       (map count)
+       (partition 7)))
+
+(defn structure-data [string]
+  (->> (clojure.string/split string #"\n")
+       rest
+       (partition 34)
+       (map (juxt first second nnext))
+       (map #(zipmap [:name :status :weeks] %))))
+
+(defn -main []
+  (print \tab "Which of the following tasks would you like completed?:" nl
+         nl tabs "1) Import roster of team member and their schedules"
+         nl tabs "2) Print the roster of team members"
+         nl tabs "3) Print a team member's Schdedule"
+         nl tabs "4) Print an overview of the coordinator's schedule"
+         nl tabs "5) Print an overview of the load puller's schedule"
+         nl tabs "6) Print an overview of the department's schedule"
+         nl tabs "7) Quit" nl nl
+         \tab "What is the number choice of your desired selection?: ")
+  (flush)
+  (let [in (read-line)]
+    (case in
+      "1" (do (print (str nl tabs "You chose to generate the roster of team members and their schedules."
+                          nl nl tabs \tab "What file should we import team member data from? : "))
+              (flush)
+              (let [in (read-line)]
+                (def data (structure-data (slurp in)))
+                (print (str nl tabs "You've successfully created the roster!" nl nl))
+                (recur)))
+      "2" (do (run! print (concat "\n" tabs "You chose to print the roster of team members."
+                                  "\n" tabs "There are currently" [(count data)] "team member(s) on the roster."
+                                  (mapv #(str nl tabs \tab "The name of team member " %1 " is " (:name %2) "." nl)
+                                        (range 1 (inc (count data)))
+                                        data)
+                                  "\n" tabs "The roster of team members can be seen above." "\n" "\n"))
+              (recur))
+      "3" (do (print (str nl tabs "You chose to print a team member's schedule!" nl tabs
+                          "What team member would you like to see the schedule of? (Enter their position in the roster): "))
+              (flush)
+              (let [in (read-line)]
+                (println (str tabs "Their schedule looks like this: "))
+                (->> in Integer. dec (nth data) :weeks vector weeks-selector table!)
+                (recur)))
+      "4" (do (print "                You chose to print the coordinator's schedule!
+                Their schedule looks like this: ")
+              (->> data (filter #(= "1" (:status %))) weeks-selector table!)
+              (recur))
+      "5" (do (print "                You chose to print the load puller's schedule!
+                Their schedule looks like this: ")
+              (->> data (filter #(= "2" (:status %))) weeks-selector table!)
+              (recur))
+      "6" (do (print (str tabs "You chose to print the entire department schedule!"
+                          nl tabs "Their schedule looks like this: "))
+              (->> data (map :weeks) weeks-selector table!)
+              (recur))
+      "7" (do (print (str tabs "Please let me know if you need any help in the future."))
+              (System/exit 0)))))
