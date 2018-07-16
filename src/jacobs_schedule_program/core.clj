@@ -1,6 +1,13 @@
 (ns jacobs-schedule-program.core
   (:gen-class))
 
+(defn structure-data [string-file]
+  (->> (clojure.string/split string-file #"\n")
+       rest
+       (partition 34)
+       (map (juxt first second nnext))
+       (map #(zipmap [:name :status :weeks] %))))
+
 (defn make-table [seq32-of-string7]
   (let [horiz-line "-----------------"
         columns    "|I|U|M|T|W|R|F|S|"
@@ -24,13 +31,6 @@
        (map (partial filter #(= % \X)))
        (map count)
        (partition 7)))
-
-(defn structure-data [string-file]
-  (->> (clojure.string/split string-file #"\n")
-       rest
-       (partition 34)
-       (map (juxt first second nnext))
-       (map #(zipmap [:name :status :weeks] %))))
 
 (defn -main []
   (print \tab "Which of the following tasks would you like completed?:" "\n"
