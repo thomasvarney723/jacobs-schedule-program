@@ -79,4 +79,5 @@
               (run! println (->> data (remove #(= "0" (:status %))) sum-team-members make-table))
               (recur))
       "7" (do (print (str "\t\t" "Please let me know if you need any help in the future."))
-              (System/exit 0)))))
+              (System/exit 0))
+      (recur))))  ;; fall through case is to loop
